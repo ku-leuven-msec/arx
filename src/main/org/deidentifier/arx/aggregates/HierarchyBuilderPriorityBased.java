@@ -22,13 +22,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.deidentifier.arx.AttributeType.Hierarchy;
 import org.deidentifier.arx.DataType;
@@ -91,6 +85,16 @@ public class HierarchyBuilderPriorityBased<T> extends HierarchyBuilder<T> implem
      */
     public static <T> HierarchyBuilderPriorityBased<T> create(DataType<T> type, Priority priority, int maxLevels){
         return new HierarchyBuilderPriorityBased<T>(type, priority, maxLevels);
+    }
+
+    /**
+     * Creates copy of given builder.
+     *
+     * @param builder
+     * @return
+     */
+    public static <T> HierarchyBuilderPriorityBased<T> create(HierarchyBuilderPriorityBased<T> builder) {
+        return new HierarchyBuilderPriorityBased<T>(builder);
     }
     
     /**
@@ -209,6 +213,18 @@ public class HierarchyBuilderPriorityBased<T> extends HierarchyBuilder<T> implem
         this.priorities = priorities;
         this.priority = priority;
         this.type = null;
+    }
+
+    /**
+     * Creates a new instance. Copy constructor.
+     * @param type
+     */
+    protected HierarchyBuilderPriorityBased(HierarchyBuilderPriorityBased<T> builder) {
+        super(Type.PRIORITY_BASED);
+        this.maxLevels = builder.maxLevels;
+        this.priorities = new HashMap<>(builder.priorities);
+        this.priority = builder.priority;
+        this.type = builder.type;
     }
     
     /**

@@ -272,6 +272,24 @@ public abstract class HierarchyBuilderGroupingBased<T> extends HierarchyBuilder<
         super(type);
         this.datatype = datatype;
     }
+
+    /**
+     * Copy constructor
+     *
+     * @param builder
+     */
+    protected HierarchyBuilderGroupingBased(HierarchyBuilderGroupingBased<T> builder){
+        super(builder.getType());
+        this.datatype = builder.datatype;
+        this.function = builder.function;
+        builder.groups.forEach((key,level) -> {
+            Level<T> newLevel = new Level<>(this,level.level);
+            for(Group<T> group:level.list){
+                newLevel.addGroup(group.size,group.function);
+            }
+            groups.put(key,newLevel);
+        });
+    }
     
     /**
      * Creates a new hierarchy, based on the predefined specification.

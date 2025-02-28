@@ -73,6 +73,10 @@ public class HierarchyBuilderDate extends HierarchyBuilder<Date> implements Seri
             map.put(Granularity.QUARTER_YEAR, "QQQ yyyy");
         }
 
+        public Format(Format format){
+            this.map = new HashMap<>(format.map);
+        }
+
         /**
          * Returns whether a format for the given granularity is set
          * @param granularity
@@ -292,6 +296,16 @@ public class HierarchyBuilderDate extends HierarchyBuilder<Date> implements Seri
     }
 
     /**
+     * Creates an hierarchy by copying the given one
+     *
+     * @param builder
+     * @return
+     */
+    public static HierarchyBuilderDate create(HierarchyBuilderDate builder){
+        return new HierarchyBuilderDate(builder);
+    }
+
+    /**
      * Loads a builder specification from the given file.
      *
      * @param <T>
@@ -352,6 +366,22 @@ public class HierarchyBuilderDate extends HierarchyBuilder<Date> implements Seri
         this.bottomCoding = bottomCoding;
         this.topCoding = topCoding;
         Arrays.sort(this.granularities);
+    }
+
+
+    /**
+     * Creates an hierarchybuilder copy
+     *
+     * @param builder
+     */
+    private HierarchyBuilderDate(HierarchyBuilderDate builder){
+        super(Type.DATE_BASED);
+        this.datatype = builder.datatype;
+        this.granularities = Arrays.copyOf(builder.granularities,builder.granularities.length);
+        this.timeZone = builder.timeZone;
+        this.format = new Format(builder.format);
+        this.bottomCoding = builder.bottomCoding;
+        this.topCoding = builder.topCoding;
     }
     
     /**

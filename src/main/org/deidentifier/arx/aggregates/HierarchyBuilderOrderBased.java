@@ -143,6 +143,16 @@ public class HierarchyBuilderOrderBased<T> extends HierarchyBuilderGroupingBased
     public static <T> HierarchyBuilderOrderBased<T> create(final DataType<T> type, final String[] order) {
         return new HierarchyBuilderOrderBased<T>(type, order);
     }
+
+    /**
+     * Creates a new instance. Create copy.
+     *
+     * @param builder
+     * @return
+     */
+    public static <T> HierarchyBuilderOrderBased<T> create(HierarchyBuilderOrderBased<T> builder) {
+        return new HierarchyBuilderOrderBased<T>(builder);
+    }
     
     /**
      * Loads a builder specification from the given file.
@@ -257,6 +267,16 @@ public class HierarchyBuilderOrderBased<T> extends HierarchyBuilderGroupingBased
             }
         };
         this.function = AggregateFunction.forType(type).createSetFunction();
+    }
+
+    /**
+     * Creates a new instance. Copy constructor.
+     *
+     * @param builder
+     */
+    private HierarchyBuilderOrderBased(HierarchyBuilderOrderBased<T> builder) {
+        super(builder);
+        this.comparator = builder.comparator;
     }
     
     /**

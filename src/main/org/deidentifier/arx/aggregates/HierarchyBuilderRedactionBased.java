@@ -65,6 +65,15 @@ public class HierarchyBuilderRedactionBased<T> extends HierarchyBuilder<T> imple
     public static <T> HierarchyBuilderRedactionBased<T> create(char redactionCharacter){
         return new HierarchyBuilderRedactionBased<T>(redactionCharacter);
     }
+
+    /**
+     * Copies the given builder
+     * @param builder
+     * @return
+     */
+    public static <T> HierarchyBuilderRedactionBased<T> create(HierarchyBuilderRedactionBased<T> builder){
+        return new HierarchyBuilderRedactionBased<T>(builder);
+    }
     
     /**
      * Loads a builder specification from the given file.
@@ -212,6 +221,21 @@ public class HierarchyBuilderRedactionBased<T> extends HierarchyBuilder<T> imple
         this.paddingCharacter = paddingCharacter;
         this.aligmentOrder = alignmentOrder;
         this.redactionOrder = redactionOrder;
+    }
+
+    /**
+     * Copy constructor
+     * @param builder
+     */
+    private HierarchyBuilderRedactionBased(HierarchyBuilderRedactionBased<T> builder){
+        super(Type.REDACTION_BASED);
+        this.aligmentOrder = builder.aligmentOrder;
+        this.paddingCharacter = builder.paddingCharacter;
+        this.redactionCharacter = builder.redactionCharacter;
+        this.redactionOrder = builder.redactionOrder;
+        this.maxValueLength = builder.maxValueLength;
+        this.domainSize = builder.domainSize;
+        this.alphabetSize = builder.alphabetSize;
     }
 
 

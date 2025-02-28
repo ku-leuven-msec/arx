@@ -56,7 +56,10 @@ public abstract class HierarchyBuilder<T> implements Serializable {
         DATE_BASED("Date"),
         
         /**  Priority-based hierarchy */
-        PRIORITY_BASED("Priority");
+        PRIORITY_BASED("Priority"),
+
+        /**  Suppression-based hierarchy */
+        SUPPRESSION_BASED("Suppression");
         
         /** Name*/
         private final String name;
@@ -81,7 +84,29 @@ public abstract class HierarchyBuilder<T> implements Serializable {
     
     /**  SVUID */
     private static final long serialVersionUID = -4182364711973630816L;
-    
+
+    /**
+     * Creates a copy of the given builder
+     *
+     * @param builder
+     * @param <T>
+     * @return
+     */
+    public static <T> HierarchyBuilder<T> create(HierarchyBuilder<T> builder){
+        HierarchyBuilder<T>result = null;
+        switch (builder.type){
+            case INTERVAL_BASED:result = HierarchyBuilderIntervalBased.create((HierarchyBuilderIntervalBased<T>)builder);break;
+            case ORDER_BASED:result = HierarchyBuilderOrderBased.create((HierarchyBuilderOrderBased<T>)builder);break;
+            case REDACTION_BASED:result = HierarchyBuilderRedactionBased.create((HierarchyBuilderRedactionBased<T>)builder);break;
+            case SUPPRESSION_BASED:result = HierarchyBuilderSuppressionBased.create((HierarchyBuilderSuppressionBased<T>)builder);break;
+            case DATE_BASED:result = (HierarchyBuilder<T>) HierarchyBuilderDate.create((HierarchyBuilderDate) builder);break;
+            case PRIORITY_BASED:result = HierarchyBuilderPriorityBased.create((HierarchyBuilderPriorityBased<T>)builder);break;
+        }
+        return result;
+    }
+
+
+
     /**
      * Loads a builder from a file.
      *

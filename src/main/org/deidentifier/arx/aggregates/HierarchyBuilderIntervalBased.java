@@ -172,6 +172,21 @@ public class HierarchyBuilderIntervalBased<T> extends HierarchyBuilderGroupingBa
             this.function = null;
             this.lower = null;
         }
+
+        /**
+         * Copy constructor
+         *
+         * @param interval
+         * @param builder
+         */
+        private Interval(Interval<T> interval,HierarchyBuilderGroupingBased<T> builder) {
+            super(interval.getLabel());
+            this.builder = builder;
+            this.min = interval.min;
+            this.max = interval.max;
+            this.function = interval.function;
+            this.lower = interval.lower;
+        }
         
         /**
          * Constructor for creating out of bounds labels.
@@ -448,6 +463,16 @@ public class HierarchyBuilderIntervalBased<T> extends HierarchyBuilderGroupingBa
     public static <T> HierarchyBuilderIntervalBased<T> create(DataType<T> type, Range<T> lowerRange, Range<T> upperRange) {
         return new HierarchyBuilderIntervalBased<T>(type, lowerRange, upperRange);
     }
+
+    /**
+     * Creates copy of given builder.
+     *
+     * @param builder
+     * @return
+     */
+    public static <T> HierarchyBuilderIntervalBased<T> create(HierarchyBuilderIntervalBased<T> builder) {
+        return new HierarchyBuilderIntervalBased<T>(builder);
+    }
     
     /**
      * Loads a builder specification from the given file.
@@ -522,6 +547,19 @@ public class HierarchyBuilderIntervalBased<T> extends HierarchyBuilderGroupingBa
         this.lowerRange = lowerRange;
         this.upperRange = upperRange;
         this.function = AggregateFunction.forType(type).createIntervalFunction();
+    }
+
+    /**
+     * Creates a new instance. Copy constructor.
+     * @param type
+     */
+    protected HierarchyBuilderIntervalBased(HierarchyBuilderIntervalBased<T> builder) {
+        super(builder);
+        this.lowerRange = builder.lowerRange;
+        this.upperRange = builder.upperRange;
+        for (Interval<T> interval:builder.intervals){
+            this.intervals.add(new Interval<T>(interval,this));
+        }
     }
 
     /**
