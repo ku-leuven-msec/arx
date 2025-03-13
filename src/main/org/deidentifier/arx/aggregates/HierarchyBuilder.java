@@ -59,7 +59,10 @@ public abstract class HierarchyBuilder<T> implements Serializable {
         PRIORITY_BASED("Priority"),
 
         /**  Suppression-based hierarchy */
-        SUPPRESSION_BASED("Suppression");
+        SUPPRESSION_BASED("Suppression"),
+
+        /** External hierarchy script-based hierarchy */
+        EXTERNAL_BASED("External");
         
         /** Name*/
         private final String name;
@@ -101,6 +104,7 @@ public abstract class HierarchyBuilder<T> implements Serializable {
             case SUPPRESSION_BASED:result = HierarchyBuilderSuppressionBased.create((HierarchyBuilderSuppressionBased<T>)builder);break;
             case DATE_BASED:result = (HierarchyBuilder<T>) HierarchyBuilderDate.create((HierarchyBuilderDate) builder);break;
             case PRIORITY_BASED:result = HierarchyBuilderPriorityBased.create((HierarchyBuilderPriorityBased<T>)builder);break;
+            case EXTERNAL_BASED:result = HierarchyBuilderExternalBased.create((HierarchyBuilderExternalBased<T>)builder);break;
         }
         return result;
     }
