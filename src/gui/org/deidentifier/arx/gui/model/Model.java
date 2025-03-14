@@ -1382,6 +1382,24 @@ public class Model implements Serializable {
         this.selectedClassValue = null;
         this.selectedAttribute = null;
     }
+
+    /**
+     * Soft resets the model. Only reset outputs.
+     */
+    public void softReset() {
+        this.resetAttributePair();
+        this.outputConfig = null;
+        this.output = null;
+        this.result = null;
+        this.groups = null;
+        this.classificationModel = new ModelClassification();
+        this.heuristicSearchStepLimit = null;
+        this.heuristicSearchThreshold = null;
+        this.heuristicSearchTimeLimit = null;
+        this.localRecodingModel = null;
+        this.selectedClassValue = null;
+        this.selectedAttribute = null;
+    }
     
     /**
      * Returns the last two selected attributes.

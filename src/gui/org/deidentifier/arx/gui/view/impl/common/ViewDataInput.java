@@ -94,6 +94,15 @@ public class ViewDataInput extends ViewData {
                 }
             });
 
+            MenuItem item2 = new MenuItem(menu, SWT.NONE);
+            item2.setText(Resources.getMessage("ViewDataInput.1")); //$NON-NLS-1$
+            item2.addSelectionListener(new SelectionAdapter() {
+                @Override
+                public void widgetSelected(final SelectionEvent arg0) {
+                    controller.actionMenuMergeWith();
+                }
+            });
+
             table.addMouseListener(new MouseAdapter() {
 
                 @Override

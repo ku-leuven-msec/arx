@@ -65,6 +65,7 @@ import org.deidentifier.arx.gui.view.impl.menu.DialogCriterionUpdate;
 import org.deidentifier.arx.gui.view.impl.menu.DialogDebug;
 import org.deidentifier.arx.gui.view.impl.menu.DialogError;
 import org.deidentifier.arx.gui.view.impl.menu.DialogFindReplace;
+import org.deidentifier.arx.gui.view.impl.menu.DialogMergeWith;
 import org.deidentifier.arx.gui.view.impl.menu.DialogHelp;
 import org.deidentifier.arx.gui.view.impl.menu.DialogMultiSelection;
 import org.deidentifier.arx.gui.view.impl.menu.DialogOrderSelection;
@@ -425,6 +426,19 @@ public class MainWindow implements IView {
      */
     public Pair<String, String> showFindReplaceDialog(Model model, DataHandle handle, int column) {
         DialogFindReplace dialog = new DialogFindReplace(shell, model, handle, column);
+        dialog.create();
+        dialog.open();
+        return dialog.getValue();
+    }
+
+    /**
+     * Shows a column merge dialog
+     * @param handle
+     * @param column
+     * @return A pair containing the column to merge with and the separator, <code>null</code> if cancel was pressed.
+     */
+    public Pair<String, String> showMergeWithDialog(Model model, DataHandle handle, int column) {
+        DialogMergeWith dialog = new DialogMergeWith(shell, model, handle, column);
         dialog.create();
         dialog.open();
         return dialog.getValue();
@@ -934,6 +948,15 @@ public class MainWindow implements IView {
                                    false) {
             public void action(Controller controller) { controller.actionMenuEditFindReplace(); }
             public boolean isEnabled(Model model) { 
+                return model != null && model.getSelectedAttribute() != null && model.getPerspective() == Perspective.CONFIGURATION;
+            }
+        });
+
+        items.add(new MainMenuItem(Resources.getMessage("MainMenu.47"), //$NON-NLS-1$
+                controller.getResources().getManagedImage("edit_find_replace.png"), //$NON-NLS-1$
+                false) {
+            public void action(Controller controller) { controller.actionMenuMergeWith(); }
+            public boolean isEnabled(Model model) {
                 return model != null && model.getSelectedAttribute() != null && model.getPerspective() == Perspective.CONFIGURATION;
             }
         });

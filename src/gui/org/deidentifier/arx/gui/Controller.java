@@ -38,6 +38,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.apache.commons.math3.util.Pair;
 import org.deidentifier.arx.ARXClassificationConfiguration;
@@ -1015,6 +1017,148 @@ public class Controller implements IView {
             model.setModified();
         }
     }
+
+    /**
+     * Column merge action
+     */
+    public void actionMenuMergeWith() {
+
+        // Check
+        if (model == null) {
+            main.showInfoDialog(main.getShell(),
+                    Resources.getMessage("Controller.3"), //$NON-NLS-1$
+                    Resources.getMessage("Controller.4")); //$NON-NLS-1$
+            return;
+        }
+
+        // Check
+        if (model.getInputConfig().getInput() == null) {
+            main.showInfoDialog(main.getShell(),
+                    Resources.getMessage("Controller.5"), //$NON-NLS-1$
+                    Resources.getMessage("Controller.6")); //$NON-NLS-1$
+            return;
+        }
+
+        // Show dialog
+        DataHandle handle = model.getInputConfig().getInput().getHandle();
+        int column = handle.getColumnIndexOf(model.getSelectedAttribute());
+        Pair<String, String> pair = main.showMergeWithDialog(model, handle, column);
+
+        // If action must be performed
+        if (pair != null) {
+
+            // Create new data containing the same data as before but with our 2 columns merged using the separator
+            List<String[]> merged = new ArrayList<>();
+            for(int col=0;col<handle.getNumColumns();col++) {
+                String[] columnData = new String[handle.getNumRows()+1];
+                if (col==handle.getColumnIndexOf(pair.getFirst())){
+                    continue;
+                }
+
+                if(col==column) {
+                    // merge 2 columns
+                    columnData[0] = model.getSelectedAttribute() + pair.getSecond() + pair.getFirst();
+                    for (int row = 0;row<handle.getNumRows();row++) {
+                        columnData[row+1] = handle.getValue(row,column) + pair.getSecond() + handle.getValue(row,handle.getColumnIndexOf(pair.getFirst()));
+                    }
+                } else{
+                    columnData[0] = handle.getAttributeName(col);
+                    for (int row = 0;row<handle.getNumRows();row++) {
+                        columnData[row+1] = handle.getValue(row,col);
+                    }
+                }
+                merged.add(columnData);
+            }
+            // transpose the merged list
+            List<String[]> transposedList = IntStream.range(0, merged.get(0).length)
+                    .mapToObj(col -> merged.stream().map(row -> row[col])
+                            .toArray(String[]::new)).collect(Collectors.toList());
+
+            Data data = Data.create(transposedList);
+            Set<String> mergedCols = new HashSet<>();
+            mergedCols.add(model.getSelectedAttribute());
+            mergedCols.add(pair.getFirst());
+
+            String newColName = model.getSelectedAttribute() + pair.getSecond() + pair.getFirst();
+
+            // Reset only the needed parts
+            softReset();
+            if (model.getOutput() != null) {
+                this.actionMenuEditReset();
+            }
+            model.softReset();
+
+            // Disable visualization
+            if (model.getMaximalSizeForComplexOperations() > 0 &&
+                    data.getHandle().getNumRows() > model.getMaximalSizeForComplexOperations()) {
+                model.setVisualizationEnabled(false);
+            }
+
+            List<String> oldColumns = new ArrayList<>();
+            for(int col=0;col<handle.getNumColumns();col++){
+                oldColumns.add(handle.getAttributeName(col));
+            }
+            // copy over old settings of columns that where not changed
+            DataDefinition newDef = data.getDefinition();
+            DataDefinition oldDef = model.getInputConfig().getInput().getDefinition();
+            for(String colName:oldColumns) {
+                if(!mergedCols.contains(colName)) {
+                    newDef.setHierarchy(colName, oldDef.getHierarchyObject(colName));
+                    newDef.setAttributeType(colName, oldDef.getAttributeType(colName));
+                    newDef.setDataType(colName, oldDef.getDataType(colName));
+                    newDef.setMaximumGeneralization(colName, oldDef.getMaximumGeneralization(colName));
+                    newDef.setMinimumGeneralization(colName, oldDef.getMinimumGeneralization(colName));
+                    newDef.setMicroAggregationFunction(colName, oldDef.getMicroAggregationFunction(colName));
+                    newDef.setResponseVariable(colName, oldDef.isResponseVariable(colName));
+                }else{
+                    // remove old from model and set a default new
+                    model.getInputConfig().removeHierarchy(colName);
+                    model.getInputConfig().removeHierarchyBuilder(colName);
+
+                    // Remove criteria for sensitive attributes
+                    if (oldDef.getAttributeType(colName) == AttributeType.SENSITIVE_ATTRIBUTE) {
+                        model.getBLikenessModel().remove(colName);
+                        model.getTClosenessModel().remove(colName);
+                        model.getLDiversityModel().remove(colName);
+                        model.getDDisclosurePrivacyModel().remove(colName);
+                    }
+                }
+            }
+
+            // Enable/disable criteria for quasi-identifiers
+            if (newDef.getQuasiIdentifyingAttributes().isEmpty()) {
+                model.getKAnonymityModel().setEnabled(false);
+                model.getDPresenceModel().setEnabled(false);
+                model.getStackelbergModel().setEnabled(false);
+                for (ModelRiskBasedCriterion c : model.getRiskBasedModel()) {
+                    c.setEnabled(false);
+                }
+
+            }
+
+            model.getInputConfig().setInput(data);
+
+            model.getInputDefinition().setAttributeType(newColName,AttributeType.INSENSITIVE_ATTRIBUTE);
+
+            model.setGroups(null);
+            model.setOutput(null, null);
+            model.setViewConfig(new ModelViewConfig());
+
+            // Display the changes
+            update(new ModelEvent(this, ModelPart.MODEL, model));
+            update(new ModelEvent(this, ModelPart.INPUT, data.getHandle()));
+            if (data.getHandle().getNumColumns() > 0) {
+                model.setSelectedAttribute(data.getHandle().getAttributeName(0));
+                update(new ModelEvent(this,
+                        ModelPart.SELECTED_ATTRIBUTE,
+                        data.getHandle().getAttributeName(0)));
+                update(new ModelEvent(this,
+                        ModelPart.CRITERION_DEFINITION,
+                        null));
+            }
+        }
+    }
+
     /**
      * Initializes the hierarchy for the currently selected attribute
      */
@@ -2135,6 +2279,15 @@ public class Controller implements IView {
         if (model != null) {
             model.reset();
         }
+        for (final Set<IView> listeners : getListeners().values()) {
+            for (final IView listener : listeners) {
+                listener.reset();
+            }
+        }
+    }
+
+    // does a reset without resetting the model fully
+    public void softReset() {
         for (final Set<IView> listeners : getListeners().values()) {
             for (final IView listener : listeners) {
                 listener.reset();
