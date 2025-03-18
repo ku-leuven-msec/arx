@@ -180,7 +180,7 @@ public class HierarchyBuilderExternalBased<T> extends HierarchyBuilder<T> implem
             }
         }
 
-        List<String[]> hierarchyRows = new ScriptExecutor().runScript(path,separator,parameters,fullData);
+        List<String[]> hierarchyRows = new ScriptExecutor().runScript(path, separator, parameters, fullData);
 
         result = hierarchyRows.toArray(new String[0][]);
         groupSizes = new int[result[0].length];
@@ -258,7 +258,7 @@ public class HierarchyBuilderExternalBased<T> extends HierarchyBuilder<T> implem
      * @return the parameters expected by the script
      */
     public List<String[]> getScriptParameters() {
-        return new ScriptExecutor().getParameters(path,separator);
+        return new ScriptExecutor().getParameters(path, separator);
     }
 
 
@@ -275,10 +275,20 @@ public class HierarchyBuilderExternalBased<T> extends HierarchyBuilder<T> implem
             try {
                 p = builder.start();
             } catch (IOException e) {
-                throw new IllegalArgumentException("Cannot run the script at path " + path + ": " + e.getMessage());
+                throw new IllegalArgumentException("Cannot run the script at path " + path + ": ");
             }
 
             List<String[]> params = this.readOutput(p);
+
+            // test if the parameters got parsed properly
+            if(params.size()>1){
+                for(int i=0;i< params.size()-1;i++){
+                    String[] par = params.get(i);
+                    if(par.length!=4){
+                        throw new IllegalArgumentException("Could not parse the parameter: " + Arrays.toString(par) + " Try changing the separator.");
+                    }
+                }
+            }
 
             try{
                 p.waitFor();
@@ -326,7 +336,7 @@ public class HierarchyBuilderExternalBased<T> extends HierarchyBuilder<T> implem
 
         private Process getProcess(String path, String separator) {
             if(!new File(path).exists()){
-                throw new IllegalArgumentException("Script path " + path + " does not exist");
+                throw new IllegalArgumentException("Script path (\"" + path + "\") does not exist");
             }
             ProcessBuilder builder = new ProcessBuilder(path, separator);
             builder.directory(new File(path).getParentFile());
@@ -355,8 +365,9 @@ public class HierarchyBuilderExternalBased<T> extends HierarchyBuilder<T> implem
                     scriptError.add(line);
                 }
 
+                // parsing first error line as message, others are for debugging reasons
                 if(!scriptError.isEmpty()){
-                    throw new IllegalArgumentException("Script did not finish properly: " + String.join(", ", scriptError));
+                    throw new IllegalArgumentException("Script did not finish properly: " + scriptError.get(0));
                 }
 
                 // check if the script properly stopped with printing (detects script not finishing properly without exceptions)
@@ -370,7 +381,7 @@ public class HierarchyBuilderExternalBased<T> extends HierarchyBuilder<T> implem
                 }
 
             }catch (IOException e) {
-                throw new IllegalArgumentException("Cannot run the script at path " + path + ": " + e.getMessage());
+                throw new IllegalArgumentException("Cannot run the script at path " + path + ": ");
             }
             return splitRows;
         }

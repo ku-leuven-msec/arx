@@ -1106,10 +1106,13 @@ public class Controller implements IView {
                     newDef.setHierarchy(colName, oldDef.getHierarchyObject(colName));
                     newDef.setAttributeType(colName, oldDef.getAttributeType(colName));
                     newDef.setDataType(colName, oldDef.getDataType(colName));
-                    newDef.setMaximumGeneralization(colName, oldDef.getMaximumGeneralization(colName));
-                    newDef.setMinimumGeneralization(colName, oldDef.getMinimumGeneralization(colName));
                     newDef.setMicroAggregationFunction(colName, oldDef.getMicroAggregationFunction(colName));
                     newDef.setResponseVariable(colName, oldDef.isResponseVariable(colName));
+                    if(oldDef.getAttributeType(colName).equals(AttributeType.QUASI_IDENTIFYING_ATTRIBUTE)) {
+                        newDef.setMaximumGeneralization(colName, oldDef.getMaximumGeneralization(colName));
+                        newDef.setMinimumGeneralization(colName, oldDef.getMinimumGeneralization(colName));
+                    }
+                    model.getInputConfig().getConfig().getAttributeWeights().remove(colName);
                 }else{
                     // remove old from model and set a default new
                     model.getInputConfig().removeHierarchy(colName);
@@ -1139,6 +1142,12 @@ public class Controller implements IView {
             model.getInputConfig().setInput(data);
 
             model.getInputDefinition().setAttributeType(newColName,AttributeType.INSENSITIVE_ATTRIBUTE);
+            model.getLDiversityModel().put(newColName, new ModelLDiversityCriterion(newColName));
+            model.getTClosenessModel().put(newColName, new ModelTClosenessCriterion(newColName));
+            model.getDDisclosurePrivacyModel().put(newColName, new ModelDDisclosurePrivacyCriterion(newColName));
+            model.getBLikenessModel().put(newColName, new ModelBLikenessCriterion(newColName));
+
+            model.getInputConfig().getConfig().setAttributeWeight(newColName,0.5);
 
             model.setGroups(null);
             model.setOutput(null, null);

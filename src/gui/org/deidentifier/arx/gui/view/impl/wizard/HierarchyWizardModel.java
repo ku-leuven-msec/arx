@@ -30,11 +30,9 @@ import org.deidentifier.arx.DataType;
 import org.deidentifier.arx.DataType.ARXDate;
 import org.deidentifier.arx.DataType.ARXOrderedString;
 import org.deidentifier.arx.DataType.DataTypeWithRatioScale;
-import org.deidentifier.arx.aggregates.HierarchyBuilder;
+import org.deidentifier.arx.aggregates.*;
 import org.deidentifier.arx.aggregates.HierarchyBuilder.Type;
-import org.deidentifier.arx.aggregates.HierarchyBuilderIntervalBased;
-import org.deidentifier.arx.aggregates.HierarchyBuilderOrderBased;
-import org.deidentifier.arx.aggregates.HierarchyBuilderPriorityBased;
+import org.deidentifier.arx.gui.Controller;
 import org.deidentifier.arx.gui.resources.Resources;
 
 /**
@@ -64,6 +62,9 @@ public class HierarchyWizardModel<T> {
     private HierarchyWizardModelPriority<T>  priorityModel;
     
     /** Var. */
+    private HierarchyWizardModelExternal<T>  externalModel;
+    
+    /** Var. */
     private final DataType<T>                dataType;
 
     /** Var. */
@@ -90,6 +91,7 @@ public class HierarchyWizardModel<T> {
         orderModel = new HierarchyWizardModelOrder<T>(dataType, locale, getOrderData());
         redactionModel = new HierarchyWizardModelRedaction<T>(dataType, data);
         priorityModel = new HierarchyWizardModelPriority<T>(dataType, data, frequency);
+        externalModel = new HierarchyWizardModelExternal<T>(dataType, data, frequency);
         
         if (dataType instanceof DataTypeWithRatioScale){
             if (data.length > 1 || data[0] != DataType.NULL_VALUE) {
@@ -114,6 +116,9 @@ public class HierarchyWizardModel<T> {
         } else if (equals(dataType, DataType.STRING)) {
             this.type = Type.REDACTION_BASED;
         }
+        else{
+            this.type = Type.EXTERNAL_BASED;
+        }
     }
 
     /**
@@ -135,6 +140,8 @@ public class HierarchyWizardModel<T> {
             return orderModel.getBuilder(serializable);
         } else if (type == Type.PRIORITY_BASED) {
             return priorityModel.getBuilder(serializable);
+        } else if (type == Type.EXTERNAL_BASED){
+            return externalModel.getBuilder(serializable);
         } else {
             throw new IllegalArgumentException(Resources.getMessage("HierarchyWizardModel.0")); //$NON-NLS-1$
         }
@@ -165,6 +172,8 @@ public class HierarchyWizardModel<T> {
             return orderModel.getHierarchy();
         } else if (type == Type.PRIORITY_BASED) {
             return priorityModel.getHierarchy();
+        } else if (type == Type.EXTERNAL_BASED){
+            return externalModel.getHierarchy();
         } else {
             throw new RuntimeException(Resources.getMessage("HierarchyWizardModel.1")); //$NON-NLS-1$
         }
@@ -204,6 +213,15 @@ public class HierarchyWizardModel<T> {
      */
     public HierarchyWizardModelDate getDateModel() {
         return dateModel;
+    }
+
+    /**
+     * Returns the model of the external-based builder.
+     *
+     * @return
+     */
+    public HierarchyWizardModelExternal<T> getExternalModel(){
+        return externalModel;
     }
 
     /**
@@ -253,6 +271,11 @@ public class HierarchyWizardModel<T> {
             if (priorityModel != null){
                 this.priorityModel.parse((HierarchyBuilderPriorityBased<T>) builder);
                 this.type = Type.PRIORITY_BASED;
+            }
+        } else if (builder.getType() == Type.EXTERNAL_BASED){
+            if (externalModel != null){
+                this.externalModel.parse((HierarchyBuilderExternalBased<T>) builder);
+                this.type = Type.EXTERNAL_BASED;
             }
         } else {
             throw new IllegalArgumentException(Resources.getMessage("HierarchyWizardModel.2")); //$NON-NLS-1$

@@ -26,11 +26,8 @@ import org.deidentifier.arx.AttributeType.Hierarchy;
 import org.deidentifier.arx.DataType;
 import org.deidentifier.arx.DataType.ARXDate;
 import org.deidentifier.arx.DataType.DataTypeWithRatioScale;
-import org.deidentifier.arx.aggregates.HierarchyBuilder;
+import org.deidentifier.arx.aggregates.*;
 import org.deidentifier.arx.aggregates.HierarchyBuilder.Type;
-import org.deidentifier.arx.aggregates.HierarchyBuilderIntervalBased;
-import org.deidentifier.arx.aggregates.HierarchyBuilderOrderBased;
-import org.deidentifier.arx.aggregates.StatisticsFrequencyDistribution;
 import org.deidentifier.arx.gui.Controller;
 import org.deidentifier.arx.gui.resources.Resources;
 import org.deidentifier.arx.gui.view.impl.wizard.ARXWizardDialog.ARXWizardButton;
@@ -117,6 +114,9 @@ public class HierarchyWizard<T> extends ARXWizard<HierarchyWizardResult<T>> {
 
     /** Var. */
     private final ARXWizardButton           buttonSave;
+
+    /** Var. */
+    private HierarchyWizardPageExternal<T> pageExternal;
 
     /** Var. */
     private HierarchyWizardPageDate         pageDate;
@@ -223,10 +223,11 @@ public class HierarchyWizard<T> extends ARXWizard<HierarchyWizardResult<T>> {
         } else {
             pageDate = null;
         }
+        pageExternal = new HierarchyWizardPageExternal<T>(controller, this, model, pageFinal);
         pageOrder = new HierarchyWizardPageOrder<T>(controller, this, model, pageFinal);
         pageRedaction = new HierarchyWizardPageRedaction<T>(controller, this, model, pageFinal);
         pagePriority = new HierarchyWizardPagePriority<T>(controller, this, model, pageFinal);
-        pageType = new HierarchyWizardPageType<T>(this, model, pageIntervals, pageOrder, pageRedaction, pageDate, pagePriority);
+        pageType = new HierarchyWizardPageType<T>(this, model, pageIntervals, pageOrder, pageRedaction, pageDate, pagePriority, pageExternal);
     }
     
     @Override
@@ -243,6 +244,7 @@ public class HierarchyWizard<T> extends ARXWizard<HierarchyWizardResult<T>> {
         if (pageDate != null) {
             addPage(pageDate);
         }
+        addPage(pageExternal);
     }
 
     @Override
@@ -349,6 +351,12 @@ public class HierarchyWizard<T> extends ARXWizard<HierarchyWizardResult<T>> {
             this.model.setType(Type.PRIORITY_BASED);
             this.pageType.updatePage();
             this.getContainer().showPage(pagePriority);
+            break;
+        case EXTERNAL_BASED:
+            this.pageExternal.updatePage();
+            this.model.setType(Type.EXTERNAL_BASED);
+            this.pageType.updatePage();
+            this.getContainer().showPage(pageExternal);
             break;
         }
     }

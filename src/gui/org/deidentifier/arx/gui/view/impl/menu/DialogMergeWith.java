@@ -158,7 +158,7 @@ public class DialogMergeWith extends TitleAreaDialog {
     @Override
     protected Control createDialogArea(Composite parent) {
 
-        Composite composite = (Composite) super.createDialogArea(parent);        
+        Composite composite = (Composite) super.createDialogArea(parent);
         Composite base = new Composite(composite, SWT.NONE);
         base.setLayoutData(SWTUtil.createFillGridData());
         base.setLayout(GridLayoutFactory.swtDefaults().numColumns(2).create());
