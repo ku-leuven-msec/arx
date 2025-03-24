@@ -98,8 +98,8 @@ public class HierarchyBuilderExternalBased<T> extends HierarchyBuilder<T> implem
     /** Must the script be run only on unique values */
     private boolean uniqueOnly;
 
-    /** Result. */
-    private transient String[][] result;
+    /** Result. We also save this one as a cache*/
+    private String[][] result;
 
     private HierarchyBuilderExternalBased(String path, Map<String, Integer> frequency, Map<String, String> parameters, String separator, boolean uniqueOnly) {
         super(Type.EXTERNAL_BASED);
@@ -121,6 +121,11 @@ public class HierarchyBuilderExternalBased<T> extends HierarchyBuilder<T> implem
         this.parameters = new HashMap<>(builder.parameters);
         this.uniqueOnly = builder.uniqueOnly;
         this.separator = builder.separator;
+        this.result = new String[builder.result.length][];
+        for (int i = 0; i < builder.result.length; i++) {
+            this.result[i] = builder.result[i].clone();
+        }
+        this.groupSizes = builder.groupSizes.clone();
     }
 
     /**
@@ -137,7 +142,8 @@ public class HierarchyBuilderExternalBased<T> extends HierarchyBuilder<T> implem
 
         // Return
         Hierarchy h = Hierarchy.create(result);
-        this.result = null;
+        // Do not reset the result, we cache it
+        //this.result = null;
         return h;
     }
 
@@ -241,6 +247,13 @@ public class HierarchyBuilderExternalBased<T> extends HierarchyBuilder<T> implem
     }
 
     /**
+     * @param separator the script separator to set
+     */
+    public void setSeparator(String separator) {
+        this.separator = separator;
+    }
+
+    /**
      * @param frequency the frequency to set
      */
     public void setFrequency(Map<String, Integer> frequency) {
@@ -285,7 +298,7 @@ public class HierarchyBuilderExternalBased<T> extends HierarchyBuilder<T> implem
                 for(int i=0;i< params.size()-1;i++){
                     String[] par = params.get(i);
                     if(par.length!=4){
-                        throw new IllegalArgumentException("Could not parse the parameter: " + Arrays.toString(par) + " Try changing the separator.");
+                        throw new IllegalArgumentException("Could not parse the parameter: " + Arrays.toString(par) + " Try changing the delimiter.");
                     }
                 }
             }

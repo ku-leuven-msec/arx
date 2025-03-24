@@ -17,17 +17,13 @@
 
 package org.deidentifier.arx.gui.view.impl.wizard;
 
-import com.univocity.parsers.common.TextParsingException;
 import org.deidentifier.arx.gui.Controller;
-import org.deidentifier.arx.gui.resources.Charsets;
 import org.deidentifier.arx.gui.resources.Resources;
 import org.deidentifier.arx.gui.view.SWTUtil;
-import org.deidentifier.arx.io.CSVSyntax;
 import org.eclipse.jface.fieldassist.ControlDecoration;
 import org.eclipse.jface.fieldassist.FieldDecorationRegistry;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.*;
-import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
@@ -37,8 +33,6 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,7 +94,15 @@ public class HierarchyWizardPageExternal<T> extends HierarchyWizardPageBuilder<T
             public void widgetSelected(SelectionEvent arg0) {
                 if(!model.getPath().equals(comboLocation.getText())) {
                     model.setPath(comboLocation.getText());
+                    Display d = composite.getDisplay();
+                    Cursor cursor = new Cursor(d,SWT.CURSOR_WAIT);
+                    Shell s = composite.getShell();
+                    s.setCursor(cursor);
+
                     evaluatePage();
+
+                    cursor = new Cursor(d, SWT.CURSOR_ARROW);
+                    s.setCursor(cursor);
                 }
             }
         });
@@ -154,7 +156,15 @@ public class HierarchyWizardPageExternal<T> extends HierarchyWizardPageBuilder<T
             public void focusLost(FocusEvent e) {
                 if(!model.getSeparator().equals(txtDelimiter.getText())) {
                     model.setSeparator(txtDelimiter.getText());
+                    Display d = composite.getDisplay();
+                    Cursor cursor = new Cursor(d,SWT.CURSOR_WAIT);
+                    Shell s = composite.getShell();
+                    s.setCursor(cursor);
+
                     evaluatePage();
+
+                    cursor = new Cursor(d, SWT.CURSOR_ARROW);
+                    s.setCursor(cursor);
                 }
             }
         });
@@ -177,7 +187,9 @@ public class HierarchyWizardPageExternal<T> extends HierarchyWizardPageBuilder<T
         group = new Group(composite, SWT.SHADOW_ETCHED_IN);
         group.setText(Resources.getMessage("HierarchyWizardPageScript.6"));
         group.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 4, 1));
-        group.setLayout(SWTUtil.createGridLayout(3, false));
+        GridLayout layout = SWTUtil.createGridLayout(3, false);
+        layout.horizontalSpacing = 10;
+        group.setLayout(layout);
 
         txtDescription = new Label(composite, SWT.WRAP);
         txtDescription.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 4, 4) );
@@ -207,16 +219,24 @@ public class HierarchyWizardPageExternal<T> extends HierarchyWizardPageBuilder<T
 
                 setErrorMessage(null);
                 try {
-                    model.build();
+                    model.buildInternal();
                 }catch (Exception e) {
+                    canFinish = false;
+                    model.update();
+                    cursor = new Cursor(d, SWT.CURSOR_ARROW);
+                    s.setCursor(cursor);
+                    updateApplyButton();
                     setErrorMessage(e.getMessage());
+                    return;
                 }
-                canFinish = true;
 
+                canFinish = true;
+                model.update();
                 cursor = new Cursor(d, SWT.CURSOR_ARROW);
                 s.setCursor(cursor);
-
+                updateApplyButton();
                 setPageComplete(true);
+
             }
         });
 
@@ -242,6 +262,12 @@ public class HierarchyWizardPageExternal<T> extends HierarchyWizardPageBuilder<T
         comboLocation.select(0);
         useDistinctOnly.setSelection(model.isUniqueOnly());
         evaluatePage();
+
+        if(model.getHierarchy()!=null){
+            canFinish = true;
+            updateApplyButton();
+            setPageComplete(true);
+        }
 
         //model.update();
     }
@@ -280,6 +306,7 @@ public class HierarchyWizardPageExternal<T> extends HierarchyWizardPageBuilder<T
                 } else {
                     decoration.hide();
                 }
+                setPageComplete(isPageComplete());
             }
         });
     }
@@ -298,11 +325,17 @@ public class HierarchyWizardPageExternal<T> extends HierarchyWizardPageBuilder<T
             parameters = model.getScriptParameters();
 
         } catch (Exception e) {
+            canFinish = false;
+            updateApplyButton();
             setErrorMessage(e.getMessage());
             return;
         }
 
+
+
         if(parameters.isEmpty()){
+            canFinish = false;
+            updateApplyButton();
             setErrorMessage(Resources.getMessage("HierarchyWizardPageScript.7"));
             return;
         }

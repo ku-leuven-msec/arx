@@ -17,11 +17,9 @@
 
 package org.deidentifier.arx.gui.view.impl.wizard;
 
-import org.deidentifier.arx.AttributeType;
 import org.deidentifier.arx.DataType;
 import org.deidentifier.arx.aggregates.HierarchyBuilder;
 import org.deidentifier.arx.aggregates.HierarchyBuilderExternalBased;
-import org.deidentifier.arx.gui.resources.Resources;
 
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +46,9 @@ public class HierarchyWizardModelExternal<T> extends HierarchyWizardModelAbstrac
     /** Must the script be run only on unique values */
     private boolean uniqueOnly = true;
 
+    /** A singleton of the builder to avoid the need of rebuilding each time */
+    private HierarchyBuilderExternalBased<T> builder;
+
     /** Data type */
     private DataType<T> dataType;
 
@@ -73,8 +74,10 @@ public class HierarchyWizardModelExternal<T> extends HierarchyWizardModelAbstrac
 
     @Override
     public HierarchyBuilderExternalBased<T> getBuilder(boolean serializable) {
-
-        return HierarchyBuilderExternalBased.create(path, frequency, parameters, separator, uniqueOnly);
+        if(builder == null){
+            this.builder = HierarchyBuilderExternalBased.create(path, frequency, parameters, separator, uniqueOnly);
+        }
+        return builder;
 
     }
 
@@ -85,6 +88,9 @@ public class HierarchyWizardModelExternal<T> extends HierarchyWizardModelAbstrac
         }
         HierarchyBuilderExternalBased<T> builder = (HierarchyBuilderExternalBased<T>)hierarchyBuilder;
 
+        this.builder = builder;
+        super.hierarchy = builder.build();
+        super.groupsizes = builder.getGroupSizes();
         path = builder.getPath();
         frequency = builder.getFrequency();
         parameters = builder.getParameters();
@@ -110,6 +116,10 @@ public class HierarchyWizardModelExternal<T> extends HierarchyWizardModelAbstrac
 
     @Override
     protected void build() {
+        // empty by design, our hierarchy build is expensive so we don't want to update the hierarchy automaticly
+    }
+
+    protected void buildInternal() {
         // Clear
         super.hierarchy = null;
         super.error = null;
@@ -119,21 +129,13 @@ public class HierarchyWizardModelExternal<T> extends HierarchyWizardModelAbstrac
         if (data == null) return;
         if (path.isEmpty()) return;
 
+        // create a new builder with the current parameters
+        this.builder = null;
         HierarchyBuilderExternalBased<T> builder = getBuilder(false);
 
-        try {
-            super.groupsizes = builder.prepare(data);
-        } catch(Exception e){
-            super.error = e.getMessage(); //$NON-NLS-1$
-            return;
-        }
+        super.groupsizes = builder.prepare(data);
 
-        try {
-            super.hierarchy = builder.build();
-        } catch(Exception e){
-            super.error = e.getMessage(); //$NON-NLS-1$
-            return;
-        }
+        super.hierarchy = builder.build();
 
     }
 
@@ -142,6 +144,9 @@ public class HierarchyWizardModelExternal<T> extends HierarchyWizardModelAbstrac
     }
 
     public List<String[]> getScriptParameters(){
+        HierarchyBuilderExternalBased<T> builder = getBuilder(false);
+        builder.setPath(path);
+        builder.setSeparator(separator);
         return this.getBuilder(false).getScriptParameters();
     }
 

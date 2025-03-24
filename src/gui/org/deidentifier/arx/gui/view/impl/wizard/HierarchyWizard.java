@@ -385,6 +385,8 @@ public class HierarchyWizard<T> extends ARXWizard<HierarchyWizardResult<T>> {
                 builder = model.getRedactionModel().getBuilder(true);
             } else if (getDialog().getCurrentPage()  instanceof HierarchyWizardPagePriority){
                 builder = model.getPriorityModel().getBuilder(true);
+            } else if (getDialog().getCurrentPage()  instanceof HierarchyWizardPageExternal) {
+                builder = model.getExternalModel().getBuilder(true);
             }
 
             // Save

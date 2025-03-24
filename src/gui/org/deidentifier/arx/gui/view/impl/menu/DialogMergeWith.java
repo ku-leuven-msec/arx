@@ -173,7 +173,7 @@ public class DialogMergeWith extends TitleAreaDialog {
         this.mergeColumn = new Combo(base, SWT.READ_ONLY);
         mergeColumn.setItems(columns);
         mergeColumn.select(0);
-        mergeColumn.setLayoutData(SWTUtil.createFillGridData());
+        mergeColumn.setLayoutData(GridDataFactory.fillDefaults().grab(true, false).create());
 
         mergeColumn.addSelectionListener(new SelectionAdapter() {
             @Override
