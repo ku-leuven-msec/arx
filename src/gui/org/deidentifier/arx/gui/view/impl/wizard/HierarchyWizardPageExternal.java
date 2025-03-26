@@ -180,6 +180,7 @@ public class HierarchyWizardPageExternal<T> extends HierarchyWizardPageBuilder<T
                 setPageComplete(false);
                 model.setUniqueOnly(useDistinctOnly.getSelection());
                 canFinish = false;
+                updateApplyButton();
                 setPageComplete(true);
             }
         });

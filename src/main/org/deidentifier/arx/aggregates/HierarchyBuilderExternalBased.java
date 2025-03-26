@@ -167,6 +167,11 @@ public class HierarchyBuilderExternalBased<T> extends HierarchyBuilder<T> implem
      * @return
      */
     public int[] prepare(String[] data){
+        // use cached value when the builder has ran before
+        if(groupSizes!=null){
+            return groupSizes;
+        }
+
         // create the data for which the script must generate a hierarchy
         String[] fullData;
         if (uniqueOnly) {
@@ -198,6 +203,14 @@ public class HierarchyBuilderExternalBased<T> extends HierarchyBuilder<T> implem
             groupSizes[i] = uniques.size();
         }
         return groupSizes;
+    }
+
+    /**
+     * Resets the cached hierarchy results
+     */
+    public void reset(){
+        groupSizes = null;
+        result = null;
     }
 
     /**
