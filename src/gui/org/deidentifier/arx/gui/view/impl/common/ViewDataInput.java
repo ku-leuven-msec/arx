@@ -103,6 +103,15 @@ public class ViewDataInput extends ViewData {
                 }
             });
 
+            MenuItem item3 = new MenuItem(menu, SWT.NONE);
+            item3.setText(Resources.getMessage("ViewDataInput.2")); //$NON-NLS-1$
+            item3.addSelectionListener(new SelectionAdapter() {
+                @Override
+                public void widgetSelected(final SelectionEvent arg0) {
+                    controller.actionMenuSplitOn();
+                }
+            });
+
             table.addMouseListener(new MouseAdapter() {
 
                 @Override

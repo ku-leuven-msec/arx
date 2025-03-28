@@ -1070,6 +1070,7 @@ public class Controller implements IView {
                 merged.add(columnData);
             }
             // transpose the merged list
+            // todo restructure code avoiding this transpose
             List<String[]> transposedList = IntStream.range(0, merged.get(0).length)
                     .mapToObj(col -> merged.stream().map(row -> row[col])
                             .toArray(String[]::new)).collect(Collectors.toList());
@@ -1148,6 +1149,172 @@ public class Controller implements IView {
             model.getBLikenessModel().put(newColName, new ModelBLikenessCriterion(newColName));
 
             model.getInputConfig().getConfig().setAttributeWeight(newColName,0.5);
+
+            model.setGroups(null);
+            model.setOutput(null, null);
+            model.setViewConfig(new ModelViewConfig());
+
+            // Display the changes
+            update(new ModelEvent(this, ModelPart.MODEL, model));
+            update(new ModelEvent(this, ModelPart.INPUT, data.getHandle()));
+            if (data.getHandle().getNumColumns() > 0) {
+                model.setSelectedAttribute(data.getHandle().getAttributeName(0));
+                update(new ModelEvent(this,
+                        ModelPart.SELECTED_ATTRIBUTE,
+                        data.getHandle().getAttributeName(0)));
+                update(new ModelEvent(this,
+                        ModelPart.CRITERION_DEFINITION,
+                        null));
+            }
+        }
+    }
+
+
+    /**
+     * Column split action
+     */
+    public void actionMenuSplitOn() {
+
+        // Check
+        if (model == null) {
+            main.showInfoDialog(main.getShell(),
+                    Resources.getMessage("Controller.3"), //$NON-NLS-1$
+                    Resources.getMessage("Controller.4")); //$NON-NLS-1$
+            return;
+        }
+
+        // Check
+        if (model.getInputConfig().getInput() == null) {
+            main.showInfoDialog(main.getShell(),
+                    Resources.getMessage("Controller.5"), //$NON-NLS-1$
+                    Resources.getMessage("Controller.6")); //$NON-NLS-1$
+            return;
+        }
+
+        // Show dialog
+        DataHandle handle = model.getInputConfig().getInput().getHandle();
+        int column = handle.getColumnIndexOf(model.getSelectedAttribute());
+        String separator = main.showSplitOnDialog(model, handle, column);
+
+        // If action must be performed
+        if (separator != null) {
+            String originalColumn = model.getSelectedAttribute();
+            String[] splitColumns = originalColumn.split(separator);
+
+            // Create new data containing the same data as before but with the given column being split into multiple
+            List<String[]> splitData = new ArrayList<>();
+            for(int col=0;col<handle.getNumColumns();col++) {
+
+
+                if(col==column) {
+                    // split into multiple column
+
+                    List<String[]> columnsData = new ArrayList<>();
+                    for(int i=0;i<splitColumns.length;i++) {
+                        columnsData.add(new String[handle.getNumRows()+1]);
+                        columnsData.get(i)[0] = splitColumns[i];
+                    }
+
+                    for (int row = 0;row<handle.getNumRows();row++) {
+                        String[] splitRow = handle.getValue(row, column).split(separator);
+                        for(int i=0;i<splitColumns.length;i++) {
+                            if(i<splitRow.length) {
+                                columnsData.get(i)[row+1] = splitRow[i];
+                            }else{
+                                // if the split is not the same size as the header, fallback to empty value
+                                columnsData.get(i)[row+1] = "";
+                            }
+                        }
+                    }
+                    splitData.addAll(columnsData);
+
+                } else{
+                    String[] columnData = new String[handle.getNumRows()+1];
+                    columnData[0] = handle.getAttributeName(col);
+                    for (int row = 0;row<handle.getNumRows();row++) {
+                        columnData[row+1] = handle.getValue(row,col);
+                    }
+                    splitData.add(columnData);
+                }
+
+            }
+            // transpose the merged list
+            // todo restructure code avoiding this transpose
+            List<String[]> transposedList = IntStream.range(0, splitData.get(0).length)
+                    .mapToObj(col -> splitData.stream().map(row -> row[col])
+                            .toArray(String[]::new)).collect(Collectors.toList());
+
+            Data data = Data.create(transposedList);
+
+            // Reset only the needed parts
+            softReset();
+            if (model.getOutput() != null) {
+                this.actionMenuEditReset();
+            }
+            model.softReset();
+
+            // Disable visualization
+            if (model.getMaximalSizeForComplexOperations() > 0 &&
+                    data.getHandle().getNumRows() > model.getMaximalSizeForComplexOperations()) {
+                model.setVisualizationEnabled(false);
+            }
+
+            List<String> oldColumns = new ArrayList<>();
+            for(int col=0;col<handle.getNumColumns();col++){
+                oldColumns.add(handle.getAttributeName(col));
+            }
+            // copy over old settings of columns that where not changed
+            DataDefinition newDef = data.getDefinition();
+            DataDefinition oldDef = model.getInputConfig().getInput().getDefinition();
+            for(String colName:oldColumns) {
+                if(!colName.equals(originalColumn)) {
+                    newDef.setHierarchy(colName, oldDef.getHierarchyObject(colName));
+                    newDef.setAttributeType(colName, oldDef.getAttributeType(colName));
+                    newDef.setDataType(colName, oldDef.getDataType(colName));
+                    newDef.setMicroAggregationFunction(colName, oldDef.getMicroAggregationFunction(colName));
+                    newDef.setResponseVariable(colName, oldDef.isResponseVariable(colName));
+                    if(oldDef.getAttributeType(colName).equals(AttributeType.QUASI_IDENTIFYING_ATTRIBUTE)) {
+                        newDef.setMaximumGeneralization(colName, oldDef.getMaximumGeneralization(colName));
+                        newDef.setMinimumGeneralization(colName, oldDef.getMinimumGeneralization(colName));
+                    }
+                    model.getInputConfig().getConfig().getAttributeWeights().remove(colName);
+                }else{
+                    // remove old from model and set a default new
+                    model.getInputConfig().removeHierarchy(colName);
+                    model.getInputConfig().removeHierarchyBuilder(colName);
+
+                    // Remove criteria for sensitive attributes
+                    if (oldDef.getAttributeType(colName) == AttributeType.SENSITIVE_ATTRIBUTE) {
+                        model.getBLikenessModel().remove(colName);
+                        model.getTClosenessModel().remove(colName);
+                        model.getLDiversityModel().remove(colName);
+                        model.getDDisclosurePrivacyModel().remove(colName);
+                    }
+                }
+            }
+
+            // Enable/disable criteria for quasi-identifiers
+            if (newDef.getQuasiIdentifyingAttributes().isEmpty()) {
+                model.getKAnonymityModel().setEnabled(false);
+                model.getDPresenceModel().setEnabled(false);
+                model.getStackelbergModel().setEnabled(false);
+                for (ModelRiskBasedCriterion c : model.getRiskBasedModel()) {
+                    c.setEnabled(false);
+                }
+
+            }
+
+            model.getInputConfig().setInput(data);
+
+            for(String newColName:splitColumns){
+                model.getInputDefinition().setAttributeType(newColName,AttributeType.INSENSITIVE_ATTRIBUTE);
+                model.getLDiversityModel().put(newColName, new ModelLDiversityCriterion(newColName));
+                model.getTClosenessModel().put(newColName, new ModelTClosenessCriterion(newColName));
+                model.getDDisclosurePrivacyModel().put(newColName, new ModelDDisclosurePrivacyCriterion(newColName));
+                model.getBLikenessModel().put(newColName, new ModelBLikenessCriterion(newColName));
+
+                model.getInputConfig().getConfig().setAttributeWeight(newColName,0.5);
+            }
 
             model.setGroups(null);
             model.setOutput(null, null);

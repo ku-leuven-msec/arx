@@ -54,24 +54,7 @@ import org.deidentifier.arx.gui.view.def.IView;
 import org.deidentifier.arx.gui.view.impl.common.ComponentTitledFolder;
 import org.deidentifier.arx.gui.view.impl.define.LayoutDefinition;
 import org.deidentifier.arx.gui.view.impl.explore.LayoutExplore;
-import org.deidentifier.arx.gui.view.impl.menu.DialogAbout;
-import org.deidentifier.arx.gui.view.impl.menu.DialogAnonymization;
-import org.deidentifier.arx.gui.view.impl.menu.DialogAuditTrail;
-import org.deidentifier.arx.gui.view.impl.menu.DialogClassificationConfiguration;
-import org.deidentifier.arx.gui.view.impl.menu.DialogComboDoubleSelection;
-import org.deidentifier.arx.gui.view.impl.menu.DialogComboSelection;
-import org.deidentifier.arx.gui.view.impl.menu.DialogCriterionSelection;
-import org.deidentifier.arx.gui.view.impl.menu.DialogCriterionUpdate;
-import org.deidentifier.arx.gui.view.impl.menu.DialogDebug;
-import org.deidentifier.arx.gui.view.impl.menu.DialogError;
-import org.deidentifier.arx.gui.view.impl.menu.DialogFindReplace;
-import org.deidentifier.arx.gui.view.impl.menu.DialogMergeWith;
-import org.deidentifier.arx.gui.view.impl.menu.DialogHelp;
-import org.deidentifier.arx.gui.view.impl.menu.DialogMultiSelection;
-import org.deidentifier.arx.gui.view.impl.menu.DialogOrderSelection;
-import org.deidentifier.arx.gui.view.impl.menu.DialogQuery;
-import org.deidentifier.arx.gui.view.impl.menu.DialogQueryResult;
-import org.deidentifier.arx.gui.view.impl.menu.DialogTopBottomCoding;
+import org.deidentifier.arx.gui.view.impl.menu.*;
 import org.deidentifier.arx.gui.view.impl.risk.LayoutRisks;
 import org.deidentifier.arx.gui.view.impl.utility.LayoutUtility;
 import org.deidentifier.arx.gui.worker.Worker;
@@ -439,6 +422,19 @@ public class MainWindow implements IView {
      */
     public Pair<String, String> showMergeWithDialog(Model model, DataHandle handle, int column) {
         DialogMergeWith dialog = new DialogMergeWith(shell, model, handle, column);
+        dialog.create();
+        dialog.open();
+        return dialog.getValue();
+    }
+
+    /**
+     * Shows a column split dialog
+     * @param handle
+     * @param column
+     * @return A string containing the separator, <code>null</code> if cancel was pressed.
+     */
+    public String showSplitOnDialog(Model model, DataHandle handle, int column) {
+        DialogSplitOn dialog = new DialogSplitOn(shell, model, handle, column);
         dialog.create();
         dialog.open();
         return dialog.getValue();
@@ -956,6 +952,15 @@ public class MainWindow implements IView {
                 controller.getResources().getManagedImage("edit_find_replace.png"), //$NON-NLS-1$
                 false) {
             public void action(Controller controller) { controller.actionMenuMergeWith(); }
+            public boolean isEnabled(Model model) {
+                return model != null && model.getSelectedAttribute() != null && model.getPerspective() == Perspective.CONFIGURATION;
+            }
+        });
+
+        items.add(new MainMenuItem(Resources.getMessage("MainMenu.48"), //$NON-NLS-1$
+                controller.getResources().getManagedImage("edit_find_replace.png"), //$NON-NLS-1$
+                false) {
+            public void action(Controller controller) { controller.actionMenuSplitOn(); }
             public boolean isEnabled(Model model) {
                 return model != null && model.getSelectedAttribute() != null && model.getPerspective() == Perspective.CONFIGURATION;
             }
