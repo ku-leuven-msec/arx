@@ -1226,7 +1226,12 @@ public class Controller implements IView {
                             }
                         }
                     }
-                    splitData.addAll(columnsData);
+                    for(String[] columnData : columnsData) {
+                        // do not add columns with empty headers
+                        if(!columnData[0].isEmpty()){
+                            splitData.add(columnData);
+                        }
+                    }
 
                 } else{
                     String[] columnData = new String[handle.getNumRows()+1];
