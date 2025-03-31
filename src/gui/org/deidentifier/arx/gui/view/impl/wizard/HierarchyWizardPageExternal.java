@@ -348,8 +348,6 @@ public class HierarchyWizardPageExternal<T> extends HierarchyWizardPageBuilder<T
             child.dispose();
         }
 
-        Map<String,String> paramValues = new HashMap<>();
-
         /* Put data into view */
         for (int i = 0; i < parameters.size() - 1; i++) {
             String[] s = parameters.get(i);
@@ -364,7 +362,6 @@ public class HierarchyWizardPageExternal<T> extends HierarchyWizardPageBuilder<T
             input.setEditable(true);
             input.setEnabled(true);
             input.setLayoutData(SWTUtil.createFillHorizontallyGridData());
-            paramValues.put(s[0],s[2]);
 
             decorate(input);
 
@@ -386,7 +383,6 @@ public class HierarchyWizardPageExternal<T> extends HierarchyWizardPageBuilder<T
             //description.setForeground(display.getSystemColor(SWT.COLOR_GRAY));
         }
 
-        model.setParameters(paramValues);
         txtDescription.setText(parameters.get(parameters.size() - 1)[0]);
 
         group.update();
